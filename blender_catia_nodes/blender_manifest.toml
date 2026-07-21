@@ -1,0 +1,15 @@
+schema_version = "1.0.0"
+
+id = "catia_nodes"
+version = "0.13.0"
+name = "CATIA Nodes"
+tagline = "Système de nœuds custom façon CATIA pour Blender"
+maintainer = "CATIA Nodes Project <noreply@example.com>"
+type = "add-on"
+
+blender_version_min = "4.2.0"
+
+# SPDX : https://spdx.org/licenses/
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
