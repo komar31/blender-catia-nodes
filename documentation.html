@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CATIA Nodes — Documentation</title>
+<style>
+  :root{
+    --bg:#eef1ef;
+    --surface:#ffffff;
+    --surface-2:#e4e9e6;
+    --ink:#16211f;
+    --ink-muted:#4b5854;
+    --ink-faint:#7c8985;
+    --accent:#1c5fa8;
+    --accent-ink:#0d3d6e;
+    --accent-soft:#dce8f5;
+    --rule:#c7d0cb;
+    --rule-soft:#dbe2de;
+    --danger:#9c3b3b;
+    --danger-soft:#f3e0df;
+
+    --s-number:#4d99d9;
+    --s-integer:#40b38c;
+    --s-vector:#6659cc;
+    --s-boolean:#8f8f8f;
+    --s-string:#2f8484;
+    --s-point:#e08a24;
+    --s-curve:#c9ab2e;
+    --s-profile:#8c4dbf;
+    --s-circle:#c9478a;
+    --s-surface:#2fae53;
+    --s-geometry:#bf3333;
+    --s-any:#8c8c8c;
+
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Consolas, "Roboto Mono", monospace;
+    --font-body: -apple-system, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12181a;
+      --surface:#1a2225;
+      --surface-2:#212b2e;
+      --ink:#e7ece9;
+      --ink-muted:#a4b3ad;
+      --ink-faint:#6c7c77;
+      --accent:#5aa3e0;
+      --accent-ink:#bcdcfb;
+      --accent-soft:#1c2f42;
+      --rule:#2c3a3e;
+      --rule-soft:#212c2f;
+      --danger:#e2827a;
+      --danger-soft:#3a2422;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12181a; --surface:#1a2225; --surface-2:#212b2e; --ink:#e7ece9; --ink-muted:#a4b3ad;
+    --ink-faint:#6c7c77; --accent:#5aa3e0; --accent-ink:#bcdcfb; --accent-soft:#1c2f42;
+    --rule:#2c3a3e; --rule-soft:#212c2f; --danger:#e2827a; --danger-soft:#3a2422;
+    color-scheme: dark;
+  }
+  :root[data-theme="light"]{
+    --bg:#eef1ef; --surface:#ffffff; --surface-2:#e4e9e6; --ink:#16211f; --ink-muted:#4b5854;
+    --ink-faint:#7c8985; --accent:#1c5fa8; --accent-ink:#0d3d6e; --accent-soft:#dce8f5;
+    --rule:#c7d0cb; --rule-soft:#dbe2de; --danger:#9c3b3b; --danger-soft:#f3e0df;
+    color-scheme: light;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      linear-gradient(var(--bg), var(--bg)) fixed,
+      repeating-linear-gradient(0deg, transparent, transparent 31px, var(--rule-soft) 31px, var(--rule-soft) 32px) fixed,
+      repeating-linear-gradient(90deg, transparent, transparent 31px, var(--rule-soft) 31px, var(--rule-soft) 32px) fixed;
+    background-blend-mode: normal;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a{ color:var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible{
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  h1,h2,h3,h4{
+    font-family: var(--font-mono);
+    text-wrap: balance;
+    line-height: 1.25;
+    margin: 0;
+  }
+  code, .mono{ font-family: var(--font-mono); }
+  table{ border-collapse: collapse; }
+  .tabular{ font-variant-numeric: tabular-nums; }
+
+  /* ---------- shell ---------- */
+  .shell{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 80px;
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+  }
+  .toc{
+    position: sticky;
+    top: 28px;
+    flex: 0 0 216px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .toc-label{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 10px 10px;
+  }
+  .toc a{
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink-muted);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 3px;
+    border-left: 2px solid transparent;
+  }
+  .toc a:hover{ color: var(--ink); background: var(--surface-2); }
+  .toc .toc-sub{ padding-left: 22px; font-size: 12.5px; }
+
+  main{ min-width: 0; flex: 1 1 auto; }
+
+  /* ---------- title block ---------- */
+  .titleblock{
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    padding: 26px 28px;
+    margin-bottom: 48px;
+  }
+  .titleblock-top{
+    display:flex; justify-content:space-between; align-items:baseline; gap: 16px; flex-wrap: wrap;
+  }
+  .titleblock h1{
+    font-size: 30px;
+    letter-spacing: -0.01em;
+  }
+  .titleblock .badge{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    padding: 3px 9px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .titleblock p.tagline{
+    margin: 10px 0 0;
+    color: var(--ink-muted);
+    font-size: 15.5px;
+    max-width: 60ch;
+  }
+  .titleblock-meta{
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule-soft);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  .titleblock-meta b{ color: var(--ink-muted); font-weight: 600; }
+
+  /* ---------- sections ---------- */
+  section{ margin-bottom: 56px; scroll-margin-top: 20px; }
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 6px;
+  }
+  h2{
+    font-size: 21px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 18px;
+  }
+  h3{ font-size: 16px; margin: 0 0 4px; }
+  section > p{ max-width: 68ch; color: var(--ink); }
+  section > p.lede{ color: var(--ink-muted); max-width: 68ch; font-size: 15.5px; }
+
+  .prose ul{ max-width: 66ch; padding-left: 22px; }
+  .prose li{ margin-bottom: 6px; }
+
+  /* ---------- node cards ---------- */
+  .node-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .node-card{
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--card-accent, var(--accent));
+    padding: 16px 18px 18px;
+  }
+  .node-card-head{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:4px;
+  }
+  .node-card-head h3{ font-family: var(--font-mono); }
+  .node-card .out-tag{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--card-accent, var(--accent));
+    white-space: nowrap;
+  }
+  .node-card .desc{ font-size: 13.5px; color: var(--ink-muted); margin: 4px 0 12px; }
+  .mode-list{ display:flex; flex-direction:column; gap:9px; }
+  .mode-row{ display:flex; flex-direction:column; gap:2px; }
+  .mode-name{ font-size: 13.5px; font-weight: 600; }
+  .mode-sockets{ font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); }
+  .mode-sockets span{ color: var(--ink-muted); }
+  .common-row{
+    margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--rule-soft);
+    font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint);
+  }
+  .common-row b{ color: var(--ink-muted); font-weight: 600; font-family: var(--font-body); }
+
+  /* ---------- socket legend ---------- */
+  .legend{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 10px 18px;
+  }
+  .legend-item{ display:flex; align-items:center; gap:10px; }
+  .swatch{ width:14px; height:14px; border-radius:3px; flex:0 0 auto; border:1px solid rgba(0,0,0,0.15); }
+  .legend-item .name{ font-family: var(--font-mono); font-size: 13px; }
+  .legend-item .what{ font-size: 12px; color: var(--ink-faint); }
+
+  /* ---------- generic table ---------- */
+  .table-wrap{ overflow-x:auto; border:1px solid var(--rule); background:var(--surface); }
+  table.data{ width:100%; border-collapse:collapse; font-size: 14px; }
+  table.data th{
+    text-align:left; font-family: var(--font-mono); font-size:11.5px; letter-spacing:0.06em;
+    text-transform:uppercase; color:var(--ink-faint); font-weight:600;
+    padding: 10px 14px; border-bottom:1px solid var(--rule); background:var(--surface-2);
+    position: sticky; top:0;
+  }
+  table.data td{ padding: 10px 14px; border-bottom:1px solid var(--rule-soft); vertical-align:top; }
+  table.data tr:last-child td{ border-bottom:none; }
+  table.data td.mono{ font-family: var(--font-mono); font-size:13px; white-space:nowrap; }
+
+  /* ---------- changelog ---------- */
+  .kind{
+    display:inline-block; font-family: var(--font-mono); font-size: 11px; font-weight:700;
+    padding: 1px 7px; border-radius: 3px; letter-spacing:0.02em;
+  }
+  .kind-x{ background:var(--danger-soft); color:var(--danger); }
+  .kind-y{ background:var(--accent-soft); color:var(--accent-ink); }
+  .kind-z{ background:var(--surface-2); color:var(--ink-muted); border:1px solid var(--rule); }
+  .version-scheme{
+    display:flex; gap:18px; flex-wrap:wrap; margin: 14px 0 22px;
+  }
+  .version-scheme .vs-item{ display:flex; align-items:center; gap:8px; font-size: 13.5px; color: var(--ink-muted); }
+
+  /* ---------- mockup fidèle a l'apparence reelle du noeud dans Blender ----------
+     Toujours sombre, quel que soit le theme de la page : c'est une capture
+     fidele d'une UI logicielle precise (Blender), pas un element themable. */
+  .bnode{
+    --bn-header:#6c4850;
+    --bn-body:#3a3a3a;
+    --bn-border:#242424;
+    --bn-field:#484848;
+    --bn-text:#e9e9e9;
+    --bn-text-dim:#a9a9a9;
+    width: 232px;
+    border-radius: 9px;
+    background: var(--bn-body);
+    border: 1px solid var(--bn-border);
+    box-shadow: 0 10px 22px -12px rgba(0,0,0,0.55);
+    font-family: var(--font-body);
+    font-size: 12.5px;
+    color: var(--bn-text);
+    margin: 14px 0 16px;
+  }
+  .bnode-header{
+    background: var(--bn-header);
+    border-radius: 9px 9px 0 0;
+    padding: 8px 12px;
+    display:flex; align-items:center; gap:7px;
+    font-weight:600; font-size: 13px;
+  }
+  .bnode-header .chev{ font-size:10px; opacity:0.7; }
+  .bnode-body{ padding: 10px 11px 12px; display:flex; flex-direction:column; gap:7px; }
+
+  .bn-out{ display:flex; justify-content:flex-end; align-items:center; gap:7px; }
+  .bn-out .lbl{ color: var(--bn-text-dim); }
+
+  .bsock{ width:9px; height:9px; border-radius:50%; border:1px solid rgba(0,0,0,0.4); flex:0 0 auto; }
+
+  .bn-dropdown{
+    background: var(--bn-field); border:1px solid rgba(0,0,0,0.35); border-radius:5px;
+    padding: 5px 10px; display:flex; justify-content:space-between; align-items:center;
+    color: var(--bn-text);
+  }
+  .bn-dropdown .chev{ font-size:10px; color:var(--bn-text-dim); }
+
+  .bn-row{ display:flex; align-items:center; gap:7px; }
+  .bn-row .field{
+    flex:1; min-width:0; background: var(--bn-field); border-radius:5px;
+    padding: 5px 10px; display:flex; justify-content:space-between; gap:6px;
+  }
+  .bn-row .field .val{ color: var(--bn-text-dim); font-variant-numeric: tabular-nums; }
+  .bn-row .ref-label{ flex:1; color: var(--bn-text-dim); padding: 3px 2px; }
+
+  .bn-vec{ display:flex; align-items:flex-start; gap:7px; }
+  .bn-vec .vcol{ flex:1; display:flex; flex-direction:column; gap:3px; }
+  .bn-vec .vname{ color: var(--bn-text-dim); font-size:11px; }
+  .bn-vec .vfields{ display:flex; gap:4px; }
+  .bn-vec .vfields .field{ flex:1; padding:4px 6px; font-size:11px; justify-content:center; }
+
+  .bn-check{ display:flex; align-items:center; gap:8px; }
+  .bn-check .box{ width:13px; height:13px; border-radius:3px; border:1px solid #7a7a7a; background:var(--accent); flex:0 0 auto; }
+  .bn-check .txt{ color: var(--bn-text-dim); }
+
+  .bn-empty .bsock{ background:transparent; border-style:dashed; }
+  .bn-empty .ref-label{ opacity:0.5; font-style:italic; }
+
+  .bnode-caption{ font-size:12.5px; color:var(--ink-faint); margin: 0 0 4px; }
+
+  /* ---------- callouts ---------- */
+  .callout{
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--ink-muted);
+    max-width: 68ch;
+  }
+  .callout.warn{ border-left-color: var(--danger); }
+  .callout p{ margin:0; }
+  .callout + .callout{ margin-top: 10px; }
+
+  footer{
+    margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint);
+  }
+
+  @media (max-width: 860px){
+    .shell{ flex-direction: column; }
+    .toc{ position: static; flex-direction: row; flex-wrap: wrap; max-height:none; width:100%; }
+    .toc .toc-sub{ display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <nav class="toc" aria-label="Sommaire">
+    <p class="toc-label">Sommaire</p>
+    <a href="#vue-ensemble">Vue d'ensemble</a>
+    <a href="#installation">Installation</a>
+    <a href="#prise-en-main">Prise en main</a>
+    <a href="#wireframe">Wireframe</a>
+    <a class="toc-sub" href="#node-point">Point</a>
+    <a class="toc-sub" href="#node-line">Line</a>
+    <a class="toc-sub" href="#node-plane">Plane</a>
+    <a class="toc-sub" href="#node-circle">Circle</a>
+    <a class="toc-sub" href="#node-polyline">Polyline</a>
+    <a class="toc-sub" href="#node-curve">Curve</a>
+    <a class="toc-sub" href="#node-projection">Projection</a>
+    <a class="toc-sub" href="#node-intersection">Intersection</a>
+    <a class="toc-sub" href="#node-parallel-curve">Parallel Curve</a>
+    <a href="#join-extrude">Join &amp; Extrude</a>
+    <a href="#parametres-math">Parameters &amp; Math</a>
+    <a href="#sockets">Types de sockets</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#limitations">Limitations connues</a>
+    <a href="#changelog">Historique des versions</a>
+  </nav>
+
+  <main>
+
+    <div class="titleblock">
+      <div class="titleblock-top">
+        <h1>CATIA&nbsp;Nodes</h1>
+        <span class="badge mono">v0.17.0</span>
+      </div>
+      <p class="tagline">Système de nœuds custom façon CATIA pour Blender — construction d'entités géométriques (points, lignes, plans, cercles, courbes, projections, intersections) dans l'éditeur de nœuds natif, indépendant de Geometry&nbsp;Nodes.</p>
+      <div class="titleblock-meta">
+        <span><b>Blender minimum</b> 4.2</span>
+        <span><b>Type</b> Extension (blender_manifest.toml)</span>
+        <span><b>Licence</b> GPL-3.0-or-later</span>
+        <span><b>Éditeur</b> CatiaNodeTree</span>
+      </div>
+    </div>
+
+    <section id="vue-ensemble">
+      <p class="eyebrow">Vue d'ensemble</p>
+      <h2>Deux niveaux de géométrie</h2>
+      <div class="prose">
+        <p class="lede">L'addon distingue systématiquement deux rôles : la géométrie de <b>construction</b> (repères, références) et la géométrie de <b>résultat</b>.</p>
+        <ul>
+          <li><b>Wireframe</b> — Point, Line, Plane, Circle, Polyline, Curve, Projection, Intersection, Parallel Curve : jamais rendues (<code>hide_render</code>), affichées en fil (ou en Empty pour un résultat ponctuel) avec un modifier Skin pour rester lisibles, nommées comme le nœud qui les a créées.</li>
+          <li><b>Résultat</b> — Extrude : le seul nœud qui produit un solide destiné à être rendu.</li>
+        </ul>
+        <p>Chaque nœud réévalue immédiatement à chaque changement (slider, mode, câblage) — aucun bouton à cliquer. Le panneau latéral garde un bouton « Réévaluer tout » en filet de sécurité.</p>
+      </div>
+    </section>
+
+    <section id="installation">
+      <p class="eyebrow">Installation</p>
+      <h2>Deux méthodes</h2>
+      <div class="prose">
+        <ul>
+          <li><b>Extension (recommandé)</b> — glisser-déposer le dossier zippé sur la fenêtre Blender, ou <code>Preferences&nbsp;&gt;&nbsp;Get&nbsp;Extensions&nbsp;&gt;&nbsp;Install from Disk</code>. Fonctionne sur n'importe quelle machine sans configuration.</li>
+          <li><b>Manuelle (legacy)</b> — copier le dossier <code>blender_catia_nodes/</code> dans le répertoire <code>scripts/addons/</code> du profil Blender, puis l'activer dans <code>Preferences&nbsp;&gt;&nbsp;Add-ons</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="prise-en-main">
+      <p class="eyebrow">Prise en main</p>
+      <h2>Ouvrir l'éditeur CATIA Nodes</h2>
+      <div class="prose">
+        <ul>
+          <li>Basculer une zone en <b>Node Editor</b>, puis choisir <code>CATIA Nodes</code> dans le sélecteur de type d'arbre.</li>
+          <li><code>Shift+A</code> ouvre le menu Add : les nœuds de construction sous <b>Wireframe</b>, Join et Extrude en entrées directes, <b>Parameters</b> et <b>Math</b> en sous-menus.</li>
+          <li>Le panneau <code>N &gt; CATIA</code> donne accès au bouton « Réévaluer tout ».</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="wireframe">
+      <p class="eyebrow">Référence des nœuds</p>
+      <h2>Wireframe</h2>
+      <p class="lede">Géométrie de construction : jamais rendue, toujours nommée comme le nœud, verrouillée en affichage fil ou Skin selon le cas.</p>
+
+      <div class="node-grid">
+
+        <article class="node-card" id="node-point" style="--card-accent:var(--s-point)">
+          <div class="node-card-head">
+            <h3>Point</h3>
+            <span class="out-tag">→ point <span class="mono">POINT</span></span>
+          </div>
+          <p class="desc">Matérialisé en Empty (Plain Axes).</p>
+
+          <p class="bnode-caption">Tel qu'il apparaît dans Blender (mode par défaut) :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Point</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">point</span><span class="bsock" style="background:var(--s-point)"></span></div>
+              <div class="bn-dropdown"><span>Coordonnées</span><span class="chev">⌄</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>x</span><span class="val">0.00</span></div></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>y</span><span class="val">0.00</span></div></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>z</span><span class="val">0.00</span></div></div>
+            </div>
+          </div>
+
+          <div class="mode-list">
+            <div class="mode-row">
+              <span class="mode-name">Coordonnées</span>
+              <span class="mode-sockets"><span>x</span>, <span>y</span>, <span>z</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Sur courbe</span>
+              <span class="mode-sockets"><span>curve</span>, <span>t</span> (0–1)</span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Sur plan</span>
+              <span class="mode-sockets"><span>surface</span>, <span>u</span>, <span>v</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Intersection</span>
+              <span class="mode-sockets"><span>curve</span>, <span>surface</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Projection</span>
+              <span class="mode-sockets"><span>point</span>, <span>surface</span></span>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" id="node-line" style="--card-accent:var(--s-curve)">
+          <div class="node-card-head">
+            <h3>Line</h3>
+            <span class="out-tag">→ curve <span class="mono">CURVE</span> · vector <span class="mono">VECTOR</span></span>
+          </div>
+          <p class="desc">Mesh 2 vertices + 1 edge, modifier Skin pour la lisibilité.</p>
+
+          <p class="bnode-caption">Mode par défaut :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Line</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">curve</span><span class="bsock" style="background:var(--s-curve)"></span></div>
+              <div class="bn-out"><span class="lbl">vector</span><span class="bsock" style="background:var(--s-vector)"></span></div>
+              <div class="bn-dropdown"><span>Deux points</span><span class="chev">⌄</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">point1</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">point2</span></div>
+            </div>
+          </div>
+
+          <div class="mode-list">
+            <div class="mode-row">
+              <span class="mode-name">Deux points</span>
+              <span class="mode-sockets"><span>point1</span>, <span>point2</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Point + direction</span>
+              <span class="mode-sockets"><span>point</span>, <span>direction</span>, <span>length</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Tangente en un point</span>
+              <span class="mode-sockets"><span>curve</span>, <span>t</span>, <span>length</span></span>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" id="node-plane" style="--card-accent:var(--s-surface)">
+          <div class="node-card-head">
+            <h3>Plane</h3>
+            <span class="out-tag">→ surface <span class="mono">SURFACE</span> · vector <span class="mono">VECTOR</span></span>
+          </div>
+          <p class="desc">Quad borné (proxy visuel), Display As&nbsp;=&nbsp;Wire verrouillé. Le plan est conceptuellement infini.</p>
+
+          <p class="bnode-caption">Mode par défaut :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Plane</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">surface</span><span class="bsock" style="background:var(--s-surface)"></span></div>
+              <div class="bn-out"><span class="lbl">vector</span><span class="bsock" style="background:var(--s-vector)"></span></div>
+              <div class="bn-dropdown"><span>Trois points</span><span class="chev">⌄</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">point1</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">point2</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">point3</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>width</span><span class="val">1.00</span></div></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>height</span><span class="val">1.00</span></div></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>rotation</span><span class="val">0.00</span></div></div>
+            </div>
+          </div>
+
+          <div class="mode-list">
+            <div class="mode-row">
+              <span class="mode-name">Trois points</span>
+              <span class="mode-sockets"><span>point1</span>, <span>point2</span>, <span>point3</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Point + normale</span>
+              <span class="mode-sockets"><span>point</span>, <span>normal</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Décalage parallèle</span>
+              <span class="mode-sockets"><span>source_plane</span>, <span>distance</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Ligne + angle</span>
+              <span class="mode-sockets"><span>line</span>, <span>reference_plane</span>, <span>angle</span></span>
+            </div>
+          </div>
+          <div class="common-row"><b>Communs à tous les modes :</b> width, height, rotation</div>
+        </article>
+
+        <article class="node-card" id="node-circle" style="--card-accent:var(--s-circle)">
+          <div class="node-card-head">
+            <h3>Circle</h3>
+            <span class="out-tag">→ circle <span class="mono">CIRCLE</span></span>
+          </div>
+          <p class="desc">Boucle fermée en fil (N segments), modifier Skin.</p>
+
+          <p class="bnode-caption">Mode par défaut :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Circle</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">circle</span><span class="bsock" style="background:var(--s-circle)"></span></div>
+              <div class="bn-dropdown"><span>Centre et rayon</span><span class="chev">⌄</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">center</span></div>
+              <div class="bn-vec">
+                <span class="bsock" style="background:var(--s-vector); margin-top:2px;"></span>
+                <div class="vcol">
+                  <span class="vname">normal</span>
+                  <div class="vfields"><div class="field">0.00</div><div class="field">0.00</div><div class="field">1.00</div></div>
+                </div>
+              </div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>radius</span><span class="val">1.00</span></div></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-integer)"></span><div class="field"><span>segments</span><span class="val">32</span></div></div>
+            </div>
+          </div>
+
+          <div class="mode-list">
+            <div class="mode-row">
+              <span class="mode-name">Centre et rayon</span>
+              <span class="mode-sockets"><span>center</span>, <span>normal</span>, <span>radius</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Centre et point</span>
+              <span class="mode-sockets"><span>surface</span>, <span>center</span>, <span>point</span></span>
+            </div>
+            <div class="mode-row">
+              <span class="mode-name">Trois points</span>
+              <span class="mode-sockets"><span>point1</span>, <span>point2</span>, <span>point3</span> (cercle circonscrit)</span>
+            </div>
+          </div>
+          <div class="common-row"><b>Commun à tous les modes :</b> segments <span class="mono">INTEGER</span> (3–128, défaut 32)</div>
+        </article>
+
+        <article class="node-card" id="node-polyline" style="--card-accent:var(--s-profile)">
+          <div class="node-card-head">
+            <h3>Polyline</h3>
+            <span class="out-tag">→ profile <span class="mono">PROFILE</span></span>
+          </div>
+          <p class="desc">Relie des points connectés par des segments droits, dans l'ordre des sockets — fermable. Nombre de sockets d'entrée <b>dynamique</b> : <code class="mono">point_0, point_1, …</code>, comme Join mais typés <span class="mono">POINT</span>. Matérialisée en fil (modifier Skin).</p>
+
+          <p class="bnode-caption">Après deux connexions (le 3<sup>e</sup> socket, vide, vient d'apparaître) :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Polyline</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">profile</span><span class="bsock" style="background:var(--s-profile)"></span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">point_0</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">point_1</span></div>
+              <div class="bn-row bn-empty"><span class="bsock"></span><span class="ref-label">point_2</span></div>
+              <div class="bn-check"><span class="box" style="background:var(--bn-field)"></span><span class="txt">Fermée</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" id="node-curve" style="--card-accent:var(--s-profile)">
+          <div class="node-card-head">
+            <h3>Curve</h3>
+            <span class="out-tag">→ profile <span class="mono">PROFILE</span></span>
+          </div>
+          <p class="desc">Courbe de Bézier cubique <b>interpolante</b> : passe exactement par chaque point connecté (conversion Catmull-Rom → Bézier), échantillonnée en polyligne — fermable. Mêmes sockets dynamiques que Polyline. <code>segments</code> règle la résolution (échantillons par intervalle entre deux points), bornes <b>dures</b> [2, 64], défaut 12.</p>
+
+          <p class="bnode-caption">Après deux connexions :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Curve</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">profile</span><span class="bsock" style="background:var(--s-profile)"></span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">point_0</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-point)"></span><span class="ref-label">point_1</span></div>
+              <div class="bn-row bn-empty"><span class="bsock"></span><span class="ref-label">point_2</span></div>
+              <div class="bn-dropdown"><span>Segments</span><span class="val">12</span></div>
+              <div class="bn-check"><span class="box" style="background:var(--bn-field)"></span><span class="txt">Fermée</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" id="node-projection" style="--card-accent:var(--s-any)">
+          <div class="node-card-head">
+            <h3>Projection</h3>
+            <span class="out-tag">→ point / curve / profile</span>
+          </div>
+          <p class="desc">Projection orthogonale d'un <code>element</code> (Point, Line, Join, Polyline <b>ou</b> Curve — socket <span class="mono">ANY</span>) sur une <code>surface</code>. Le type du résultat suit celui de l'entrée : trois sorties à demeure, une seule peuplée selon le cas ; l'objet matérialisé bascule Empty ↔ Mesh en conséquence.</p>
+
+          <p class="bnode-caption">Tel qu'il apparaît dans Blender :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Projection</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">point</span><span class="bsock" style="background:var(--s-point)"></span></div>
+              <div class="bn-out"><span class="lbl">curve</span><span class="bsock" style="background:var(--s-curve)"></span></div>
+              <div class="bn-out"><span class="lbl">profile</span><span class="bsock" style="background:var(--s-profile)"></span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-any)"></span><span class="ref-label">element</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-surface)"></span><span class="ref-label">surface</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" id="node-intersection" style="--card-accent:var(--s-any)">
+          <div class="node-card-head">
+            <h3>Intersection</h3>
+            <span class="out-tag">→ point / curve</span>
+          </div>
+          <p class="desc">Intersection de deux entités (<code>element1</code>/<code>element2</code>, socket <span class="mono">ANY</span>) : plan ∩ plan → une droite, ligne ∩ plan → un point, ligne ∩ ligne → un point (si coplanaires, sinon erreur propre). <code>length</code> fixe l'étendue matérialisée d'un résultat droite (infinie en théorie).</p>
+
+          <p class="bnode-caption">Tel qu'il apparaît dans Blender :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Intersection</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">point</span><span class="bsock" style="background:var(--s-point)"></span></div>
+              <div class="bn-out"><span class="lbl">curve</span><span class="bsock" style="background:var(--s-curve)"></span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-any)"></span><span class="ref-label">element1</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-any)"></span><span class="ref-label">element2</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>length</span><span class="val">5.00</span></div></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" id="node-parallel-curve" style="--card-accent:var(--s-curve)">
+          <div class="node-card-head">
+            <h3>Parallel Curve</h3>
+            <span class="out-tag">→ curve <span class="mono">CURVE</span></span>
+          </div>
+          <p class="desc">Décale une <code>curve</code> (Line) d'une <code>distance</code>, perpendiculairement à elle, dans le plan d'une <code>surface</code> support. Même représentation qu'une Line.</p>
+
+          <p class="bnode-caption">Tel qu'il apparaît dans Blender :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Parallel Curve</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">curve</span><span class="bsock" style="background:var(--s-curve)"></span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-curve)"></span><span class="ref-label">curve</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-surface)"></span><span class="ref-label">surface</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>distance</span><span class="val">1.00</span></div></div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="join-extrude">
+      <p class="eyebrow">Référence des nœuds</p>
+      <h2>Join &amp; Extrude</h2>
+      <div class="node-grid">
+
+        <article class="node-card" style="--card-accent:var(--s-profile)">
+          <div class="node-card-head">
+            <h3>Join</h3>
+            <span class="out-tag">→ profile <span class="mono">PROFILE</span></span>
+          </div>
+          <p class="desc">Assemble plusieurs Line bout à bout en un profil unique, fermé ou ouvert (Circle n'est pas accepté ici — utiliser Polyline ou Curve pour partir directement de points). Nombre de sockets d'entrée <b>dynamique</b> : <code class="mono">edge_0, edge_1, …</code> — un socket vide de plus apparaît à chaque connexion, recompaction sans trou à la déconnexion. Matérialisé en fil (modifier Skin), comme Line.</p>
+
+          <p class="bnode-caption">Après deux connexions (le 3<sup>e</sup> socket, vide, vient d'apparaître) :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Join</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">profile</span><span class="bsock" style="background:var(--s-profile)"></span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-curve)"></span><span class="ref-label">edge_0</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-curve)"></span><span class="ref-label">edge_1</span></div>
+              <div class="bn-row bn-empty"><span class="bsock"></span><span class="ref-label">edge_2</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" style="--card-accent:var(--s-geometry)">
+          <div class="node-card-head">
+            <h3>Extrude</h3>
+            <span class="out-tag">→ geometry <span class="mono">GEOMETRY</span></span>
+          </div>
+          <p class="desc"><code>profile</code> accepte Line, Circle, Join, Polyline ou Curve. <code>direction</code> optionnelle — si non connectée, normale de Newell du profil (ou normale du cercle pour Circle). <code>length</code> requise. Seul nœud <b>rendu</b> (<code>hide_render&nbsp;=&nbsp;False</code>) : profil fermé → solide (<code>extrude_face_region</code>), profil ouvert → ruban (<code>extrude_edge_only</code>).</p>
+
+          <p class="bnode-caption">Tel qu'il apparaît dans Blender :</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Extrude</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">geometry</span><span class="bsock" style="background:var(--s-geometry)"></span></div>
+              <div class="bn-dropdown"><span>Profil</span><span class="chev">⌄</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-profile)"></span><span class="ref-label">profile</span></div>
+              <div class="bn-vec">
+                <span class="bsock" style="background:var(--s-vector); margin-top:2px;"></span>
+                <div class="vcol">
+                  <span class="vname">direction</span>
+                  <div class="vfields"><div class="field">0.00</div><div class="field">0.00</div><div class="field">1.00</div></div>
+                </div>
+              </div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>length</span><span class="val">1.00</span></div></div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="parametres-math">
+      <p class="eyebrow">Référence des nœuds</p>
+      <h2>Parameters &amp; Math</h2>
+      <div class="node-grid">
+
+        <article class="node-card" style="--card-accent:var(--s-number)">
+          <div class="node-card-head"><h3>Float</h3><span class="out-tag">→ value <span class="mono">NUMBER</span></span></div>
+          <p class="desc">Constante flottante, sans entrée — la valeur est une propriété du nœud, pas un socket.</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Float</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">value</span><span class="bsock" style="background:var(--s-number)"></span></div>
+              <div class="bn-dropdown" style="justify-content:center;"><span class="val" style="color:var(--bn-text)">3.50</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" style="--card-accent:var(--s-integer)">
+          <div class="node-card-head"><h3>Integer</h3><span class="out-tag">→ value <span class="mono">INTEGER</span></span></div>
+          <p class="desc">Constante entière, sans entrée — la valeur est une propriété du nœud, pas un socket.</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Integer</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">value</span><span class="bsock" style="background:var(--s-integer)"></span></div>
+              <div class="bn-dropdown" style="justify-content:center;"><span class="val" style="color:var(--bn-text)">7</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" style="--card-accent:var(--s-boolean)">
+          <div class="node-card-head"><h3>Boolean</h3><span class="out-tag">→ value <span class="mono">BOOLEAN</span></span></div>
+          <p class="desc">Constante booléenne, sans entrée.</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Boolean</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">value</span><span class="bsock" style="background:var(--s-boolean)"></span></div>
+              <div class="bn-check"><span class="box"></span><span class="txt">Valeur</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" style="--card-accent:var(--s-string)">
+          <div class="node-card-head"><h3>String</h3><span class="out-tag">→ value <span class="mono">STRING</span></span></div>
+          <p class="desc">Constante texte, sans entrée.</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>String</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">value</span><span class="bsock" style="background:var(--s-string)"></span></div>
+              <div class="bn-dropdown"><span>texte</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="node-card" style="--card-accent:var(--s-number)">
+          <div class="node-card-head"><h3>Operations</h3><span class="out-tag">→ value <span class="mono">NUMBER</span></span></div>
+          <p class="desc"><code>a</code>, <code>b</code> (b masqué sur les opérations unaires).</p>
+          <p class="mode-sockets">Addition · Soustraction · Multiplication · Division · Minimum · Maximum · Puissance · Modulo · Valeur absolue · Racine carrée · Opposé</p>
+          <div class="bnode">
+            <div class="bnode-header"><span class="chev">⌄</span><span>Operations</span></div>
+            <div class="bnode-body">
+              <div class="bn-out"><span class="lbl">value</span><span class="bsock" style="background:var(--s-number)"></span></div>
+              <div class="bn-dropdown"><span>Addition</span><span class="chev">⌄</span></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>a</span><span class="val">0.00</span></div></div>
+              <div class="bn-row"><span class="bsock" style="background:var(--s-number)"></span><div class="field"><span>b</span><span class="val">0.00</span></div></div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section id="sockets">
+      <p class="eyebrow">Référence</p>
+      <h2>Types de sockets</h2>
+      <p class="lede">Une couleur par type de donnée transportée — reprise fidèlement des couleurs réellement utilisées dans l'éditeur de nœuds.</p>
+      <div class="legend">
+        <div class="legend-item"><span class="swatch" style="background:var(--s-number)"></span><span><span class="name">NUMBER</span><br /><span class="what">flottant éditable inline</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-integer)"></span><span><span class="name">INTEGER</span><br /><span class="what">entier éditable inline</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-vector)"></span><span><span class="name">VECTOR</span><br /><span class="what">vecteur 3D éditable inline</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-boolean)"></span><span><span class="name">BOOLEAN</span><br /><span class="what">case à cocher</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-string)"></span><span><span class="name">STRING</span><br /><span class="what">champ texte</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-point)"></span><span><span class="name">POINT</span><br /><span class="what">GPoint — référence</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-curve)"></span><span><span class="name">CURVE</span><br /><span class="what">GLine — référence</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-profile)"></span><span><span class="name">PROFILE</span><br /><span class="what">GProfile — référence</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-circle)"></span><span><span class="name">CIRCLE</span><br /><span class="what">GCircle — référence</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-surface)"></span><span><span class="name">SURFACE</span><br /><span class="what">GPlane — référence</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-geometry)"></span><span><span class="name">GEOMETRY</span><br /><span class="what">objet mesh — référence</span></span></div>
+        <div class="legend-item"><span class="swatch" style="background:var(--s-any)"></span><span><span class="name">ANY</span><br /><span class="what">générique — Projection.element, Intersection.element1/2</span></span></div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <p class="eyebrow">Pour aller plus loin</p>
+      <h2>Architecture</h2>
+      <div class="prose">
+        <ul>
+          <li><code>core/engine.py</code> — moteur DAG générique (GNode, EvalContext), indépendant de <code>bpy</code>, avec cache et propagation dirty.</li>
+          <li><code>core/geometry.py</code> — dataclasses analytiques (GPoint, GLine, GPlane, GCircle, GProfile) et algèbre vectorielle fermée ; l'objet Blender n'est jamais relu comme source de données. Inclut une conversion Catmull-Rom → Bézier pour le nœud Curve (interpolation exacte par les points, échantillonnée en profil).</li>
+          <li><code>blender_adapter/</code> — matérialisation via <code>bmesh</code> et <code>bpy.data</code> exclusivement, jamais <code>bpy.ops</code> (trop lent pour un usage interactif). Peut aussi reconvertir un objet Empty ↔ Mesh en place lorsqu'un nœud change de type de résultat selon ce qui est connecté (Intersection, Projection).</li>
+          <li>Chaque changement (slider, mode, câblage) réévalue tout l'arbre ; le cache par nœud garantit que seule la portion réellement modifiée recalcule.</li>
+          <li>Les objets Blender sont ré-adoptés par nom après rechargement d'un fichier — aucun doublon créé.</li>
+          <li>Certains sockets (<code>Extrude.profile</code>, <code>Intersection.element1/2</code>, <code>Projection.element</code>) acceptent plusieurs types réels : Blender ne bloque pas les connexions entre types de sockets custom différents, <code>evaluate()</code> fait le dispatch via <code>isinstance</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="limitations">
+      <p class="eyebrow">Honnêteté</p>
+      <h2>Limitations connues</h2>
+      <div class="callout warn">
+        <p>Aucun nœud « Vector » littéral autonome n'existe encore : seuls <code>Plane.vector</code> et <code>Line.vector</code> fournissent des vecteurs réutilisables dans le graphe.</p>
+      </div>
+      <div class="callout warn">
+        <p>Le socket <code>Extrude.profile</code> reste coloré <span class="mono" style="color:var(--s-profile)">PROFILE</span> — y brancher une Line, un Circle, une Polyline ou une Curve relie visuellement des couleurs différentes. Ça fonctionne, ce n'est pas homogène.</p>
+      </div>
+      <div class="callout warn">
+        <p>Circle ne peut pas encore être branché dans Join (seul Line l'est actuellement) — utiliser Polyline ou Curve pour construire un profil directement à partir de points.</p>
+      </div>
+      <div class="callout warn">
+        <p>Circle (GCircle) n'est pas encore accepté par Projection ni par Intersection — seuls Point, Line et les profils (Join/Polyline/Curve) le sont.</p>
+      </div>
+      <div class="callout warn">
+        <p>Curve n'implémente pas une vraie courbure analytique (contrairement à GLine/GCircle/GPlane) : le résultat est directement un profil échantillonné, comme Polyline — seule la façon de calculer ses sommets diffère.</p>
+      </div>
+    </section>
+
+    <section id="changelog">
+      <p class="eyebrow">Historique</p>
+      <h2>Versions</h2>
+      <div class="version-scheme">
+        <span class="vs-item"><span class="kind kind-x">X</span> changement d'architecture majeur</span>
+        <span class="vs-item"><span class="kind kind-y">Y</span> nouvelle fonctionnalité</span>
+        <span class="vs-item"><span class="kind kind-z">Z</span> ajustement / correction</span>
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th style="width:90px">Version</th><th style="width:50px">Type</th><th>Changement</th></tr></thead>
+          <tbody>
+            <tr><td class="mono tabular">0.1.0</td><td><span class="kind kind-x">X</span></td><td>Architecture initiale : moteur DAG, adaptateur bmesh, Point/Line/Plane/Extrude, panneau latéral.</td></tr>
+            <tr><td class="mono tabular">0.1.1</td><td><span class="kind kind-z">Z</span></td><td>Correction : masquage de socket connecté ; resynchronisation de topologie après rechargement.</td></tr>
+            <tr><td class="mono tabular">0.2.0</td><td><span class="kind kind-y">Y</span></td><td>Nœud Join — sockets d'entrée dynamiques, assemble des edges en profil.</td></tr>
+            <tr><td class="mono tabular">0.3.0</td><td><span class="kind kind-y">Y</span></td><td>Extrude accepte Line en plus de Join ; Plane redevient une référence non extrudable.</td></tr>
+            <tr><td class="mono tabular">0.3.1</td><td><span class="kind kind-z">Z</span></td><td>Correction : valeurs par défaut des sockets jamais appliquées (Plane, Line, Extrude).</td></tr>
+            <tr><td class="mono tabular">0.4.0</td><td><span class="kind kind-y">Y</span></td><td>Nœuds Float / Boolean / String, menu Paramètres, socket STRING.</td></tr>
+            <tr><td class="mono tabular">0.5.0</td><td><span class="kind kind-y">Y</span></td><td>Nœud Operations, menu Math.</td></tr>
+            <tr><td class="mono tabular">0.5.1</td><td><span class="kind kind-z">Z</span></td><td>Correction : plantage à la création des nœuds sans mode.</td></tr>
+            <tr><td class="mono tabular">0.6.0</td><td><span class="kind kind-y">Y</span></td><td>Plane expose une sortie vector (sa normale).</td></tr>
+            <tr><td class="mono tabular">0.6.1</td><td><span class="kind kind-z">Z</span></td><td>Nommage des objets = nom du nœud associé, unicité déléguée à Blender.</td></tr>
+            <tr><td class="mono tabular">0.6.2</td><td><span class="kind kind-z">Z</span></td><td>Correction : renommage de nœud non répercuté sur l'objet (cache non invalidé).</td></tr>
+            <tr><td class="mono tabular">0.7.0</td><td><span class="kind kind-y">Y</span></td><td>Join matérialise désormais un objet (visible dans l'Outliner).</td></tr>
+            <tr><td class="mono tabular">0.7.1</td><td><span class="kind kind-z">Z</span></td><td>Correction : doublon d'objet Join après rechargement de fichier.</td></tr>
+            <tr><td class="mono tabular">0.8.0</td><td><span class="kind kind-y">Y</span></td><td>Modifier Skin pour l'épaisseur visuelle de Line et Join.</td></tr>
+            <tr><td class="mono tabular">0.8.1</td><td><span class="kind kind-z">Z</span></td><td>Correction : ordre de construction de la couche skin ; sommet racine manquant.</td></tr>
+            <tr><td class="mono tabular">0.9.0</td><td><span class="kind kind-y">Y</span></td><td>Exclusion du rendu (hide_render) pour toute la géométrie de construction.</td></tr>
+            <tr><td class="mono tabular">0.9.1</td><td><span class="kind kind-z">Z</span></td><td>Correction : nom d'objet de Join jamais synchronisé vers le nœud.</td></tr>
+            <tr><td class="mono tabular">0.9.2</td><td><span class="kind kind-z">Z</span></td><td>Packaging : blender_manifest.toml (Extension), retrait du bl_info legacy.</td></tr>
+            <tr><td class="mono tabular">0.10.0</td><td><span class="kind kind-y">Y</span></td><td>Point : nouveau mode « Sur plan » (coordonnées U/V).</td></tr>
+            <tr><td class="mono tabular">0.11.0</td><td><span class="kind kind-y">Y</span></td><td>Line expose une sortie vector (sa direction).</td></tr>
+            <tr><td class="mono tabular">0.11.1</td><td><span class="kind kind-z">Z</span></td><td>Sous-menu Add « Wireframe » regroupant Point / Line / Plane.</td></tr>
+            <tr><td class="mono tabular">0.11.2</td><td><span class="kind kind-z">Z</span></td><td>Plane : affichage viewport verrouillé sur « Wire ».</td></tr>
+            <tr><td class="mono tabular">0.12.0</td><td><span class="kind kind-y">Y</span></td><td>Nœud Circle — centre et rayon, centre et point, trois points.</td></tr>
+            <tr><td class="mono tabular">0.12.1</td><td><span class="kind kind-z">Z</span></td><td>Circle : paramètre segments réglable, borné [3, 128].</td></tr>
+            <tr><td class="mono tabular">0.13.0</td><td><span class="kind kind-y">Y</span></td><td>Extrude accepte Circle (conversion en profil fermé — cylindre).</td></tr>
+            <tr><td class="mono tabular">0.14.0</td><td><span class="kind kind-y">Y</span></td><td>Socket INTEGER et nœud Integer ; Circle.segments migre de NUMBER vers INTEGER ; menu « Paramètres » renommé « Parameters ».</td></tr>
+            <tr><td class="mono tabular">0.15.0</td><td><span class="kind kind-y">Y</span></td><td>Nouveaux nœuds Projection (Line → Plane), Intersection (Plane ∩ Plane) et Parallel Curve sous Wireframe.</td></tr>
+            <tr><td class="mono tabular">0.16.0</td><td><span class="kind kind-y">Y</span></td><td>Intersection généralisée (plan/plan, ligne/plan, ligne/ligne, deux sorties point/curve) ; nouveau nœud à points dynamiques pour un profil à segments droits (renommé <b>Polyline</b> en 0.17.0).</td></tr>
+            <tr><td class="mono tabular">0.16.1</td><td><span class="kind kind-z">Z</span></td><td>Projection accepte aussi un Point en entrée (pas seulement une Line).</td></tr>
+            <tr><td class="mono tabular">0.16.2</td><td><span class="kind kind-z">Z</span></td><td>Projection accepte aussi un profil (Join/Polyline/Curve), sortie <code>profile</code> supplémentaire.</td></tr>
+            <tr><td class="mono tabular">0.17.0</td><td><span class="kind kind-y">Y</span></td><td>L'ancien nœud « Curve » (segments droits) est renommé <b>Polyline</b> ; nouveau nœud <b>Curve</b> : courbe de Bézier cubique interpolante à travers les points connectés, résolution réglable (bornes dures).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      CATIA Nodes — documentation générée pour la révision 0.17.0. Voir <code>versions.txt</code> pour l'historique complet en texte brut.
+    </footer>
+
+  </main>
+</div>
+</body>
+</html>
