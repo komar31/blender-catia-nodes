@@ -1,0 +1,316 @@
+CATIA Nodes — Historique des versions
+======================================
+
+Schéma : X.Y.Z
+  X = changement d'architecture majeur
+  Y = nouvelle fonctionnalité
+  Z = ajustement / amélioration / correction d'une fonctionnalité existante
+
+
+0.1.0 — Architecture initiale
+------------------------------
+- core/engine.py : moteur DAG générique (GNode, Socket, SocketType, EvalContext,
+  cache + propagation dirty), repris tel quel du projet CATIA existant, avec un
+  seul ajout : SocketType.POINT.
+- core/geometry.py : dataclasses analytiques du Niveau 1 (GPoint, GLine, GPlane,
+  GCircle) + helpers vectoriels purs (point_on_line, line_plane_intersection,
+  project_point_on_plane, plane_quad_corners, stable_uv_basis).
+- blender_adapter/ : BlenderAdapter (registre {node.id: Object}, upsert_* via
+  bmesh uniquement — jamais bpy.ops), 8 sockets bpy custom (NUMBER, VECTOR,
+  BOOLEAN, POINT, CURVE, SURFACE, GEOMETRY, ANY), CatiaNodeTree.
+- nodes/base.py : pont GNode <-> bpy.types.Node (CatiaBaseNode), mécanisme de
+  dropdown "mode" avec union des sockets + masquage par mode.
+- nodes/point.py, line.py, plane.py, extrude.py : 4 premières entités et leurs
+  méthodes de construction (Point : coordinates/on_curve/intersection/
+  projection ; Line : two_points/point_direction/tangent_at_point ; Plane :
+  three_points/point_normal/offset_parallel/through_line_angle ; Extrude :
+  profil = Plane).
+- ui/panel.py : panneau latéral (N-panel) + bouton "Réévaluer tout".
+- __init__.py racine : bl_info (legacy), register()/unregister(), menu Add.
+
+0.1.1 — Corrections suite au premier test réel
+-----------------------------------------------
+- Correction : Blender refuse silencieusement `socket.hide = True` sur un
+  socket connecté — les sockets devenant non pertinents après un changement
+  de mode sont désormais détachés avant d'être masqués.
+- Correction : evaluate_tree() ne resynchronisait la topologie du graphe
+  (engine_node.incoming) que depuis NodeTree.update() — après un rechargement
+  de fichier, les connexions redevenaient invisibles pour le moteur tant
+  qu'aucun lien n'était retouché manuellement. La resynchronisation vit
+  désormais dans evaluate_tree() lui-même, quel que soit le déclencheur.
+
+0.2.0 — Nœud Join
+-------------------
+- Nouveau nœud Join : assemble plusieurs entités bout à bout en un profil
+  unique (fermé ou ouvert), avec un nombre de sockets d'entrée dynamique
+  (un socket vide de plus apparaît à chaque connexion, recompaction sans
+  trou à la déconnexion).
+
+0.3.0 — Extrude accepte Line
+------------------------------
+- Extrude est repensé : `profile` accepte désormais la sortie de Join (profil
+  multi-edges) ou directement de Line (un edge seul = profil ouvert trivial),
+  au lieu de Plane. Le Plane redevient une pure référence de construction,
+  plus jamais extrudée directement. Direction par défaut calculée par la
+  méthode de Newell sur le profil.
+
+0.3.1 — Correction : valeurs par défaut des sockets
+------------------------------------------------------
+- Correction (bug systémique) : le `default` déclaré côté moteur sur un
+  Socket n'était jamais reporté sur le default_value réel du socket bpy à la
+  création du nœud — affectait Plane.width/height/distance, Line.length,
+  Extrude.length (tous affichaient 0.0 au lieu de leur valeur par défaut).
+
+0.4.0 — Nœuds Float / Boolean / String
+------------------------------------------
+- Nouveau menu "Paramètres" avec trois nœuds constantes sans entrée (Float,
+  Boolean, String), valeur portée par une propriété du nœud (les sorties
+  n'ont jamais de default_value éditable).
+- Nouveau socket STRING (CatiaSocketString).
+
+0.5.0 — Nœud Operations (menu Math)
+---------------------------------------
+- Nouveau nœud Operations : addition/soustraction/multiplication/division/
+  min/max/puissance/modulo/valeur absolue/racine carrée/opposé, sur le même
+  mécanisme mode + MODE_SOCKETS que Point/Line/Plane (masque l'opérande B
+  sur les opérations unaires).
+
+0.5.1 — Correction : crash sur les nœuds sans mode
+-------------------------------------------------------
+- Correction : _apply_visibility() référençait self.mode sans garde et
+  plantait silencieusement (traceback console) à la création de tout nœud
+  sans dropdown de mode (Float, Boolean, String, Join).
+
+0.6.0 — Plane : sortie vector
+--------------------------------
+- Plane expose une seconde sortie "vector" (sa normale), réutilisable
+  directement ailleurs dans le graphe (ex: câblée dans Extrude.direction) —
+  premier point de sortie d'un vecteur calculé dans l'addon.
+
+0.6.1 — Nommage des objets = nom du nœud associé
+-------------------------------------------------------
+- Les objets Blender matérialisés portent désormais le nom du nœud associé
+  (et le suivent s'il est renommé), au lieu d'un schéma générique
+  "Label_id". Unicité déléguée à Blender (suffixe automatique en cas de
+  collision).
+
+0.6.2 — Correction : renommage non répercuté
+---------------------------------------------------
+- Correction : une simple assignation à engine_node.display_name ne marquait
+  pas le GNode dirty — renommer un nœud ne renommait l'objet associé qu'à la
+  prochaine évaluation déclenchée pour une autre raison. Corrigé dans
+  CatiaBaseNode et, séparément, dans l'implémentation dédiée de Join.
+
+0.7.0 — Join matérialise un objet
+------------------------------------
+- Join matérialise désormais un mesh en fil (edges seulement, pas de face)
+  représentant le profil assemblé — jusque-là seul nœud géométrique de
+  l'addon absent de l'Outliner.
+
+0.7.1 — Correction : doublon d'objet Join après rechargement
+--------------------------------------------------------------------
+- Correction : après ouverture d'un fichier, un GNode neuf pouvait être
+  reconstruit à un instant où object_name se lisait encore vide, créant un
+  objet en double au lieu de ré-adopter l'existant. Filet de sécurité ajouté
+  dans BlenderAdapter._get_or_create() : ré-adoption par nom désiré si un
+  objet correspondant existe déjà et n'est revendiqué par aucun autre nœud.
+
+0.8.0 — Épaisseur visuelle (modifier Skin)
+-----------------------------------------------
+- Line et Join (entités en fil, sans face) reçoivent un modifier Skin non
+  destructif pour rester visibles en shading Solide (le modifier Wireframe,
+  envisagé d'abord, ignore explicitement les edges isolés).
+
+0.8.1 — Correction : construction de la couche skin
+------------------------------------------------------------
+- Correction : la couche de données "skin" doit être créée AVANT les
+  vertices dans bmesh, pas après (sinon invalidation des références BMVert
+  déjà obtenues). Ajout d'un sommet "racine" (use_root) par objet, requis
+  par le modifier Skin (sans quoi Blender loguait un avertissement à chaque
+  évaluation).
+
+0.9.0 — Exclusion du rendu pour la géométrie de construction
+--------------------------------------------------------------------
+- Point, Line, Plane et Join passent hide_render = True ("Disable in
+  Renders") — géométrie de construction, jamais le résultat final. Extrude
+  reste rendu normalement.
+
+0.9.1 — Correction : nom d'objet de Join jamais synchronisé
+-------------------------------------------------------------------
+- Correction : l'implémentation dédiée de _sync_to_engine() pour Join ne
+  recopiait jamais engine_node.object_name vers self.obj_name (contrairement
+  à la version de base, non héritée ici) — obj_name restait vide en
+  permanence, masqué jusque-là par le filet de sécurité de 0.7.1.
+
+0.9.2 — Packaging : Extension Blender
+------------------------------------------
+- Ajout de blender_manifest.toml (schéma Extensions, Blender 4.2+) et retrait
+  du bl_info legacy — installation possible via glisser-déposer d'un zip sur
+  n'importe quelle machine, plus seulement par copie manuelle dans
+  scripts/addons/.
+
+0.10.0 — Point : mode "Sur plan"
+-------------------------------------
+- Nouvelle méthode de construction pour Point : coordonnées U/V dans le
+  repère local d'un plan (origin + u·u_axis + v·v_axis).
+
+0.11.0 — Line : sortie vector
+------------------------------------
+- Line expose une seconde sortie "vector" (sa direction normalisée),
+  réutilisable comme Plane.vector — deuxième source de vecteur disponible
+  dans le graphe.
+
+0.11.1 — Sous-menu Add "Wireframe"
+----------------------------------------
+- Point, Line et Plane sont regroupés sous un sous-menu "Wireframe" dans le
+  menu Add ; Join et Extrude restent en entrées directes.
+
+0.11.2 — Plane : viewport display verrouillé sur "Wire"
+---------------------------------------------------------------
+- L'affichage de Plane (Object Properties > Viewport Display > Display As)
+  est forcé sur "Wire" à chaque évaluation réelle — référence de
+  construction, jamais une surface à regarder pleine.
+
+0.12.0 — Nœud Circle
+-----------------------
+- Nouveau nœud Circle (menu Wireframe) avec trois méthodes de construction :
+  centre et rayon, centre et point (projetés sur un plan support), trois
+  points (cercle circonscrit, formule vectorielle 3D vérifiée sur deux cas
+  géométriques connus). Sortie de type CIRCLE (GCircle : centre/normale/
+  rayon), matérialisé en fil (N segments) avec le même traitement que
+  Line/Join (modifier Skin, exclusion du rendu).
+
+0.12.1 — Circle : segments réglables
+-------------------------------------------
+- Nouveau paramètre "segments" (défaut 32, borné [3, 128], clampé côté
+  moteur), commun aux trois modes de construction — remplace la résolution
+  fixe codée en dur.
+
+0.13.0 — Extrude accepte Circle
+--------------------------------------
+- Extrude accepte désormais un Circle en entrée de `profile`, converti en
+  polygone fermé (core.geometry.circle_to_profile) au nombre de segments déjà
+  réglé sur le nœud Circle — un cercle extrudé devient un cylindre. Même
+  fonction de conversion réutilisée par l'affichage du fil (Circle) et par
+  Extrude : une seule résolution, jamais deux calculs qui pourraient
+  diverger.
+
+0.14.0 — Socket INTEGER + nœud Integer
+------------------------------------------
+- Nouveau SocketType.INTEGER (core/engine.py) et socket bpy associé
+  CatiaSocketInteger (blender_adapter/sockets.py) : champ entier, sans les
+  décimales qu'affichait jusque-là tout paramètre numérique (ex: "38,62"
+  segments sur un cercle).
+- Circle.segments migre de NUMBER vers INTEGER — bornes [3, 128] toujours
+  clampées côté moteur, widget désormais entier.
+- Nouveau nœud Integer (menu Parameters) : même schéma que Float/Boolean/
+  String (valeur portée par une propriété du nœud, aucune entrée).
+- Menu Add "Paramètres" renommé "Parameters" (Float/Integer/Boolean/String).
+
+0.15.0 — Nœuds Projection / Intersection / Parallel Curve (Wireframe)
+-----------------------------------------------------------------------------
+- Nouveau nœud Projection : projette une Line sur un Plane (projection
+  orthogonale des deux extrémités), matérialisé comme une Line.
+- Nouveau nœud Intersection (version initiale, plan/plan uniquement) : droite
+  d'intersection de deux Plane (core.geometry.plane_plane_intersection),
+  longueur matérialisée réglable (la droite réelle est infinie).
+- Nouveau nœud Parallel Curve : décale une Line d'une distance donnée,
+  perpendiculairement à elle, dans le plan d'un Plane support.
+- Les trois sont matérialisés via la même représentation que Line (mesh 2
+  vertices + modifier Skin), factorisée dans
+  BlenderAdapter._upsert_curve_object — donc déjà exclus du rendu Cycles
+  (hide_render = True) dès cette version, comme Line/Point/Plane/Join/Circle.
+- core/geometry.py : project_vector_on_plane (variante de
+  project_point_on_plane pour une position brute) et plane_plane_intersection
+  (formule fermée à trois plans, vérifiée sur deux cas connus).
+
+0.16.0 — Intersection généralisée (plan/plan, line/plane, line/line) + nœud Curve
+-------------------------------------------------------------------------------------
+- Intersection repensé pour calculer l'intersection entre n'importe quelle
+  paire d'entités plutôt que seulement plan/plan : `element1`/`element2`
+  (SocketType.ANY, jusque-là déclaré mais inutilisé) acceptent Line ou Plane
+  indifféremment ; le type réel du résultat est déterminé au moment de
+  l'évaluation (plan ∩ plan -> droite, line ∩ plane -> point, line ∩ line ->
+  point si coplanaires et non parallèles). Les combinaisons curve/plane,
+  line/surface et plane/surface de la demande initiale sont des alias de ces
+  trois cas dans le modèle Niveau 1 actuel (CURVE == GLine, SURFACE ==
+  GPlane, aucun type de courbe/surface distinct pour l'instant).
+- Le nœud porte désormais deux sorties à demeure, 'point' et 'curve' : seule
+  celle correspondant au résultat réel est peuplée (l'autre vaut None), et
+  l'objet Blender matérialisé bascule en conséquence entre Empty et mesh-Line.
+- BlenderAdapter._get_or_create gagne la capacité de reconvertir un objet en
+  place quand son type de donnée ne correspond plus au résultat demandé
+  (Empty <-> Mesh n'étant pas convertible directement en Python, l'ancien
+  objet est supprimé puis recréé du bon type, sous le même nom) — jusque-là
+  chaque nœud avait un type de résultat fixe, seul Intersection en a besoin.
+- core/geometry.py : line_line_intersection (formule fermée des points les
+  plus proches sur deux droites, avec détection des cas parallèle et gauche).
+- Nouveau nœud Curve (Wireframe) : polyligne reliant des points connectés
+  dans l'ordre des sockets, avec un toggle "closed" (case à cocher) pour
+  refermer la boucle — mêmes sockets d'entrée dynamiques que Join (un slot
+  vide de plus à chaque connexion), mais typés POINT et sans la contrainte de
+  chaînage bout-à-bout. Produit un GProfile, donc directement utilisable
+  comme profil d'Extrude sans aucune modification côté Extrude.
+- BlenderAdapter._upsert_profile_object factorise la représentation mesh en
+  fil (edges seulement) commune à Join et Curve.
+
+0.16.1 — Projection généralisée (Point ou Line)
+-----------------------------------------------------
+- Projection accepte désormais un Point aussi bien qu'une Line en entrée
+  'element' (SocketType.ANY, même mécanisme qu'Intersection.element1/2) :
+  point -> point projeté (Empty), line -> droite projetée (mesh). Avant
+  cette version, seule une Line était acceptée.
+- Deux sorties à demeure 'point'/'curve' (comme Intersection), objet
+  matérialisé basculant entre Empty et mesh-Line selon le résultat réel via
+  le même mécanisme de reconversion (BlenderAdapter._get_or_create /
+  _matches_data_kind, introduit en 0.16.0 pour Intersection, maintenant
+  réutilisé tel quel).
+- BlenderAdapter._upsert_point_object factorise la représentation Empty
+  commune à Point, Intersection (résultat point) et Projection (résultat
+  point) — même refactor que _upsert_curve_object pour les résultats Line.
+
+0.16.2 — Projection accepte un profil (Join/Curve)
+----------------------------------------------------------
+- Projection accepte désormais un profil (GProfile, sortie de Join ou de
+  Curve) en entrée 'element', en plus de Point et Line : chaque sommet du
+  profil est projeté indépendamment sur la surface, la topologie (liste
+  ordonnée + closed) est conservée. Troisième sortie à demeure 'profile'
+  (en plus de 'point'/'curve'), matérialisée comme un Join/Curve (mesh en
+  fil) via le nouveau BlenderAdapter.upsert_projection_profile (réutilise
+  _upsert_profile_object, déjà factorisé pour Join/Curve en 0.16.0).
+- core/geometry.py : project_profile_on_plane (projette chaque sommet via
+  project_vector_on_plane, conserve closed).
+- Le cas Line -> Profile ne déclenche pas la reconversion Empty <-> Mesh de
+  l'objet (les deux résultats sont des objets MESH, seule leur géométrie
+  interne diffère) — seul le passage vers/depuis un résultat Point (Empty)
+  la déclenche.
+- Portée non couverte pour l'instant : Circle (GCircle) en entrée de
+  'element' — pourrait être ajouté plus tard via circle_to_profile, comme
+  pour Extrude.
+
+0.17.0 — Curve renommé Polyline, nouveau nœud Curve (Bézier interpolante)
+-------------------------------------------------------------------------------
+- L'ancien nœud "Curve" (polyligne à segments droits à travers des points,
+  sockets dynamiques) est renommé "Polyline" (nodes/polyline.py, bl_idname
+  CatiaNodePolyline) — logique de construction inchangée, seul le nom
+  change, pour libérer "Curve" pour un vrai nœud courbe.
+- Nouveau nœud Curve (menu Wireframe, nodes/curve.py, bl_idname
+  CatiaNodeCurve) : courbe de Bézier cubique interpolante passant
+  exactement par les points connectés (mêmes sockets dynamiques que
+  Polyline/Join), échantillonnée en profil pour l'affichage/l'extrusion.
+  Conversion standard Catmull-Rom -> Bézier (tangente en Pi = (P[i+1] -
+  P[i-1]) / 2, extrapolée aux extrémités d'un profil ouvert) :
+  core.geometry.bezier_spline_to_profile + _cubic_bezier_point.
+- Contrôle "segments" (résolution : nombre d'échantillons par intervalle
+  entre deux points consécutifs, défaut 12) — propriété du nœud (IntProperty
+  à bornes DURES [2, 64], contrairement aux sockets NUMBER/INTEGER de ce
+  projet qui ne portent que des bornes indicatives), dans l'esprit de
+  Circle.segments sans réutiliser le mécanisme de socket (aurait compliqué
+  la reconstruction des sockets dynamiques point_N pour un gain marginal).
+- BlenderAdapter : upsert_curve (ancien, pour Polyline) renommé
+  upsert_polyline ; nouveau upsert_curve pour le nœud Curve — même
+  représentation mesh en fil que Join/Polyline (_upsert_profile_object,
+  inchangé).
+- Extrude et Projection acceptent Curve au même titre que Join/Polyline
+  (tous trois produisent un GProfile) — messages d'erreur et docstrings mis
+  à jour en conséquence, aucun changement de logique nécessaire.
